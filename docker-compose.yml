@@ -1,0 +1,71 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: zaldo
+      POSTGRES_USER: zaldo
+      POSTGRES_PASSWORD: zaldo
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: ./backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    environment:
+      DATABASE_URL: postgresql+psycopg://zaldo:zaldo@db:5432/zaldo
+      FRONTEND_URL: http://localhost:3000
+      SECRET_KEY: changeme
+      ADMIN_EMAILS: founder@zaldo.cl
+    volumes:
+      - ./backend:/app
+      - ./db:/db
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+  posthog:
+    image: posthog/posthog:latest
+    environment:
+      DATABASE_URL: postgres://posthog:posthog@posthog-db:5432/posthog
+      REDIS_URL: redis://posthog-redis:6379/
+      SECRET_KEY: changeme
+    depends_on:
+      - posthog-db
+      - posthog-redis
+    ports:
+      - "8001:8000"
+
+  posthog-db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: posthog
+      POSTGRES_USER: posthog
+      POSTGRES_PASSWORD: posthog
+    volumes:
+      - posthog-db-data:/var/lib/postgresql/data
+
+  posthog-redis:
+    image: redis:7
+    volumes:
+      - posthog-redis-data:/data
+
+volumes:
+  db-data:
+  posthog-db-data:
+  posthog-redis-data:

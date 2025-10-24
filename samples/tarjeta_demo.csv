@@ -1,0 +1,5 @@
+Fecha,Descripcion,Monto,Tipo
+01-01-2024,Netflix,-8990,cargo
+02-01-2024,Uber,-3500,cargo
+03-01-2024,Devolución tienda,4500,abono
+Totales,,,-12990,
